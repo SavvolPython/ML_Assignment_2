@@ -1,0 +1,43 @@
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+wine = load_wine()
+wine_data_train, wine_data_test, wine_target_train, wine_target_test = train_test_split(wine.data, wine.target,
+                                                                                        test_size=0.2, random_state=100)
+
+#standardization
+scaler = StandardScaler()
+wine_data_train, wine_data_test = scaler.fit_transform(wine_data_train), scaler.fit_transform(wine_data_test)
+
+#PCA
+
+def do_pca(components, is_plot:bool = False):
+    pca_model = PCA(n_components=components, random_state= 100)
+    pca_train, pca_test = pca_model.fit(wine_data_train), pca_model.fit(wine_data_test)
+    reduced_train, reduced_test = pca_train.transform(wine_data_train), pca_test.transform(wine_data_test)
+    if is_plot:
+        sns.scatterplot(x = reduced_train[:,0], y = reduced_train[:,1], hue = wine_target_train, palette="icefire")
+        plt.show()
+    return pca_train.explained_variance_ratio_
+
+def explained_variance_sum(list_var, is_verbose:bool = False, is_plot:bool = False) -> list[float]:
+    cumulative_sums = []
+    sum = 0
+    for i in range(len(list_var)):
+        sum += list_var[i]
+        cumulative_sums.append(sum)
+        if is_verbose:
+            print(f"Variance until explained up to and including {i}th component: {sum}")
+
+    if is_plot:
+        sns.lineplot(x = [i for i in range(13)], y = cumulative_sums)
+        plt.show()
+    return cumulative_sums
+
+explained_variance_sum(do_pca(13), is_plot= True, is_verbose=True)
+
