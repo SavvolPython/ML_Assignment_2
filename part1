@@ -1,29 +1,46 @@
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_wine
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+
+#Authors:
+#Juan Alejandro Ramon Ortega (s6470173)
+#Erika Saiz (s5880734)
+#Dániel Dávid (s6415997)
 
 wine = load_wine()
-wine_data_train, wine_data_test, wine_target_train, wine_target_test = train_test_split(wine.data, wine.target,
-                                                                                        test_size=0.2, random_state=100)
+
+dimensions = pd.DataFrame(wine.data, columns=wine.feature_names)
+wine_classes = pd.Series(wine.target, name="class")
+
+print(dimensions.shape)               #(samples, features)
+print(wine.target_names)              #the class names
+print(wine_classes.value_counts())    #samples per class
+print(dimensions.head())
 
 #standardization
 scaler = StandardScaler()
-wine_data_train, wine_data_test = scaler.fit_transform(wine_data_train), scaler.fit_transform(wine_data_test)
+wine.data= scaler.fit_transform(wine.data)
 
-#PCA
 
-def do_pca(components, is_plot:bool = False):
+def do_pca(data, components:int = 2, is_plot:bool = False, target = None, exp_variance:bool = False):
     pca_model = PCA(n_components=components, random_state= 100)
-    pca_train, pca_test = pca_model.fit(wine_data_train), pca_model.fit(wine_data_test)
-    reduced_train, reduced_test = pca_train.transform(wine_data_train), pca_test.transform(wine_data_test)
+    pca_data= pca_model.fit(data)
+    reduced_data= pca_data.transform(data)
     if is_plot:
-        sns.scatterplot(x = reduced_train[:,0], y = reduced_train[:,1], hue = wine_target_train, palette="icefire")
+        sns.scatterplot(x = reduced_data[:,0], y = reduced_data[:,1], hue = target, palette="icefire")
+        plt.xlabel("Principal component 1")
+        plt.ylabel("Principal component 2")
+        plt.title("Two component PCA of Wine samples")
+        plt.legend(title = "Class")
         plt.show()
-    return pca_train.explained_variance_ratio_
+
+    if exp_variance:
+        return pca_data.explained_variance_ratio_
+    return reduced_data
 
 def explained_variance_sum(list_var, is_verbose:bool = False, is_plot:bool = False) -> list[float]:
     cumulative_sums = []
@@ -35,9 +52,9 @@ def explained_variance_sum(list_var, is_verbose:bool = False, is_plot:bool = Fal
             print(f"Variance until explained up to and including {i}th component: {sum}")
 
     if is_plot:
-        sns.lineplot(x = [i for i in range(13)], y = cumulative_sums)
+        sns.lineplot(x = [i for i in range(1, 14)], y = cumulative_sums)
+        plt.xlabel("Number of components (n)")
+        plt.ylabel("Cumulative explained variance (%)")
+        plt.title("Cumulative explained variance by number of principal components")
         plt.show()
     return cumulative_sums
-
-explained_variance_sum(do_pca(13), is_plot= True, is_verbose=True)
-
