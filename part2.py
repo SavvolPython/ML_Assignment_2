@@ -60,8 +60,6 @@ def do_kmeans(data, n_clusters:int = 8, is_plot:bool = False, is_cluster_silhoue
     return wss, silhouette_score(data, clustered_data)
 
 
-#do_kmeans(do_pca(wine.data, 2), 3, is_plot= True)
-
 def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is_verbose:bool = False):
     wss_scores = []
     sihlouette_scores = []
