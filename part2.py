@@ -49,18 +49,23 @@ def do_kmeans(data, n_clusters:int = 8, is_plot:bool = False, is_cluster_silhoue
         if len(data[0]) != 2:
             raise Exception("Number of components has to be 2 to make a plot")
         sns.scatterplot(x = data[:,0], y = data[:,1], hue = clustered_data, palette="icefire")
+        plt.xlabel("Principal component 1")
+        plt.ylabel("Principal component 2")
+        plt.title(f"Result of K-Means clustering with {n_clusters} clusters after applying PCA with 2 components")
+        plt.legend(title = "Cluster")
         plt.show()
+        
     if is_cluster_silhouette:
         sample_silhouette_values = silhouette_samples(data, clustered_data)
         cluster_silhouette_values = []
         for i in range(n_clusters):
             ith_cluster_silhouette_values = sample_silhouette_values[clustered_data == i]
             cluster_silhouette_values.append(np.mean(ith_cluster_silhouette_values))
-        return wss, silhouette_score(data, clustered_data), cluster_silhouette_values
+        return wss, silhouette_score(data, clustered_data), sorted(cluster_silhouette_values)
     return wss, silhouette_score(data, clustered_data)
 
 
-def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is_verbose:bool = False):
+def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is_combined_plot:bool = False, is_verbose:bool = False):
     wss_scores = []
     sihlouette_scores = []
     for i in range(min_n_clusters, max_n_clusters + 1):
@@ -71,7 +76,26 @@ def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is
             print(curr_score)
     if is_elbow_plot:
         sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = wss_scores)
+        plt.xlabel("Number of clusters (k)")
+        plt.ylabel("Within Cluster Sum of Squared Errors")
+        plt.title("Elbow plot for K-Means WSS")
         plt.show()
+    if is_combined_plot:
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = wss_scores, ax= ax1, color = "blue", label = "WSS")
+        sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = sihlouette_scores, ax= ax2, color = "green", label = "Silhouette coefficient")
+        ax2.set_ylim(-1,1)
+        ax1.set_xlabel("Number of clusters (k)")
+        ax1.set_ylabel("Within Cluster Sum of Squared Errors")
+        ax2.set_ylabel("Silhouette coefficient")
+        plt.legend()
+        ax1.legend(loc='upper left')
+        plt.title("Elbow plot for K-Means WSS and Silhouette coefficients")
+        plt.show()
+
+    return wss_scores, sihlouette_scores
+
 
     return wss_scores, sihlouette_scores
 
