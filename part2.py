@@ -9,73 +9,82 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, silhouette_samples
 
 wine = load_wine()
-#standardization
+# standardization
 scaler = StandardScaler()
-wine.data= scaler.fit_transform(wine.data)
+wine.data = scaler.fit_transform(wine.data)
 
-#PCA
+# PCA
 
-def do_pca(data, components:int = 2, is_plot:bool = False, target = None, exp_variance:bool = False):
-    pca_model = PCA(n_components=components, random_state= 100)
-    pca_data= pca_model.fit(data)
-    reduced_data= pca_data.transform(data)
+
+def do_pca(data, components: int = 2, is_plot: bool = False, target=None, exp_variance: bool = False):
+    pca_model = PCA(n_components=components, random_state=100)
+    pca_data = pca_model.fit(data)
+    reduced_data = pca_data.transform(data)
     if is_plot:
-        sns.scatterplot(x = reduced_data[:,0], y = reduced_data[:,1], hue = target, palette="icefire")
+        sns.scatterplot(
+            x=reduced_data[:, 0], y=reduced_data[:, 1], hue=target, palette="icefire")
         plt.show()
 
     if exp_variance:
         return pca_data.explained_variance_ratio_
     return reduced_data
 
-def explained_variance_sum(list_var, is_verbose:bool = False, is_plot:bool = False) -> list[float]:
+
+def explained_variance_sum(list_var, is_verbose: bool = False, is_plot: bool = False) -> list[float]:
     cumulative_sums = []
     sum = 0
     for i in range(len(list_var)):
         sum += list_var[i]
         cumulative_sums.append(sum)
         if is_verbose:
-            print(f"Variance until explained up to and including {i}th component: {sum}")
+            print(
+                f"Variance until explained up to and including {i}th component: {sum}")
 
     if is_plot:
-        sns.lineplot(x = [i for i in range(13)], y = cumulative_sums)
+        sns.lineplot(x=[i for i in range(13)], y=cumulative_sums)
         plt.show()
     return cumulative_sums
 
-def do_kmeans(data, n_clusters:int = 8, is_plot:bool = False, is_cluster_silhouette:bool = False):
-    kmeans = KMeans(n_clusters=n_clusters, random_state= 100).fit(data)
+
+def do_kmeans(data, n_clusters: int = 8, is_plot: bool = False, is_cluster_silhouette: bool = False):
+    kmeans = KMeans(n_clusters=n_clusters, random_state=100).fit(data)
     wss = kmeans.inertia_
     clustered_data = kmeans.predict(data)
     if is_plot:
         if len(data[0]) != 2:
             raise Exception("Number of components has to be 2 to make a plot")
-        sns.scatterplot(x = data[:,0], y = data[:,1], hue = clustered_data, palette="icefire")
+        sns.scatterplot(x=data[:, 0], y=data[:, 1],
+                        hue=clustered_data, palette="icefire")
         plt.xlabel("Principal component 1")
         plt.ylabel("Principal component 2")
-        plt.title(f"Result of K-Means clustering with {n_clusters} clusters after applying PCA with 2 components")
-        plt.legend(title = "Cluster")
+        plt.title(
+            f"Result of K-Means clustering with {n_clusters} clusters after applying PCA with 2 components")
+        plt.legend(title="Cluster")
         plt.show()
-        
+
     if is_cluster_silhouette:
         sample_silhouette_values = silhouette_samples(data, clustered_data)
         cluster_silhouette_values = []
         for i in range(n_clusters):
             ith_cluster_silhouette_values = sample_silhouette_values[clustered_data == i]
-            cluster_silhouette_values.append(np.mean(ith_cluster_silhouette_values))
+            cluster_silhouette_values.append(
+                np.mean(ith_cluster_silhouette_values))
         return wss, silhouette_score(data, clustered_data), sorted(cluster_silhouette_values)
     return wss, silhouette_score(data, clustered_data)
 
 
-def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is_combined_plot:bool = False, is_verbose:bool = False):
+def compare_kmeans(min_n_clusters, max_n_clusters, is_elbow_plot: bool = False, is_combined_plot: bool = False, is_verbose: bool = False):
     wss_scores = []
     sihlouette_scores = []
     for i in range(min_n_clusters, max_n_clusters + 1):
-        curr_score = do_kmeans(do_pca(wine.data, 2), n_clusters= i)
+        curr_score = do_kmeans(do_pca(wine.data, 2), n_clusters=i)
         wss_scores.append(curr_score[0])
         sihlouette_scores.append(curr_score[1])
         if is_verbose:
             print(curr_score)
     if is_elbow_plot:
-        sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = wss_scores)
+        sns.lineplot(x=[i for i in range(min_n_clusters,
+                     max_n_clusters + 1)], y=wss_scores)
         plt.xlabel("Number of clusters (k)")
         plt.ylabel("Within Cluster Sum of Squared Errors")
         plt.title("Elbow plot for K-Means WSS")
@@ -83,9 +92,11 @@ def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is
     if is_combined_plot:
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
-        sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = wss_scores, ax= ax1, color = "blue", label = "WSS")
-        sns.lineplot(x = [i for i in range(min_n_clusters, max_n_clusters + 1)], y = sihlouette_scores, ax= ax2, color = "green", label = "Silhouette coefficient")
-        ax2.set_ylim(-1,1)
+        sns.lineplot(x=[i for i in range(min_n_clusters, max_n_clusters + 1)],
+                     y=wss_scores, ax=ax1, color="blue", label="WSS")
+        sns.lineplot(x=[i for i in range(min_n_clusters, max_n_clusters + 1)],
+                     y=sihlouette_scores, ax=ax2, color="green", label="Silhouette coefficient")
+        ax2.set_ylim(-1, 1)
         ax1.set_xlabel("Number of clusters (k)")
         ax1.set_ylabel("Within Cluster Sum of Squared Errors")
         ax2.set_ylabel("Silhouette coefficient")
@@ -97,14 +108,7 @@ def compare_kmeans(min_n_clusters,max_n_clusters, is_elbow_plot:bool = False, is
     return wss_scores, sihlouette_scores
 
 
-    return wss_scores, sihlouette_scores
+compare_kmeans(2, 12, is_elbow_plot=True, is_verbose=True)
 
-compare_kmeans(2, 12, is_elbow_plot= True, is_verbose= True)
-
-print(do_kmeans(do_pca(wine.data, components= 2), n_clusters= 3, is_cluster_silhouette= True))
-    
-
-
-
-
-
+print(do_kmeans(do_pca(wine.data, components=2),
+      n_clusters=3, is_cluster_silhouette=True))
