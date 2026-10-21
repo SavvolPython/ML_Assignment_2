@@ -119,8 +119,6 @@ def print_loss_curve(train_losses, validation_losses, hidden_layer_sizes):
 result = do_neural_network(wine_data_train, wine_data_test, wine_target_train,
     wine_target_test, is_matrix=False, hidden_layer_sizes=(10,), early_stopping=True)
 print(f"Training accuracy: {result[0]}, testing accuracy: {result[1]}, train log loss: {result[2]}, test log loss: {result[3]}, train F1 score: {result[4]}, test F1 score: {result[5]}")
-# print(mlp_grid_search(wine_data_train, wine_data_test))
-#do_loss_plot(wine_data_train, wine_target_train,
-             #n_iter=112, hidden_layer_sizes=(10,))
+
 
 
